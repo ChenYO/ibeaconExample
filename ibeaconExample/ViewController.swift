@@ -69,15 +69,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                 manager.startRangingBeacons(in: region as! CLBeaconRegion)
                 stateLabel.text = "已在region中"
                 
-                let content = UNMutableNotificationContent()
-                content.title = "IBeacon Test"
-                content.body = "inside"
-                content.badge = 1
-                content.sound = UNNotificationSound.default()
-                
-                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
-                let request = UNNotificationRequest(identifier: "notification", content: content, trigger: trigger)
-                UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                notification(message: "inside")
             } else {
                 print("不支援ranging")
             }
@@ -96,15 +88,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
         
         stateLabel.text = "Entering region"
-        let content = UNMutableNotificationContent()
-        content.title = "IBeacon Test"
-        content.body = "enter"
-        content.badge = 1
-        content.sound = UNNotificationSound.default()
-        
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
-        let request = UNNotificationRequest(identifier: "notification", content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+        notification(message: "enter")
     }
 
     //離開範圍
@@ -112,15 +96,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         manager.stopRangingBeacons(in: region as! CLBeaconRegion)
         view.backgroundColor = UIColor.white
         stateLabel.text = "Exiting region"
-        let content = UNMutableNotificationContent()
-        content.title = "IBeacon Test"
-        content.body = "exit"
-        content.badge = 1
-        content.sound = UNNotificationSound.default()
-        
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
-        let request = UNNotificationRequest(identifier: "notification", content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+        notification(message: "exit")
     }
     
     //顯示beacon距離及訊號強度
@@ -158,6 +134,18 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, rangingBeaconsDidFailFor region: CLBeaconRegion, withError error: Error) {
         print("Ranging Beacon Fail: \(error.localizedDescription)")
+    }
+    
+    func notification(message: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "IBeacon Test"
+        content.body = message
+        content.badge = 1
+        content.sound = UNNotificationSound.default()
+        
+//        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+        let request = UNNotificationRequest(identifier: "notification", content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
 }
 
