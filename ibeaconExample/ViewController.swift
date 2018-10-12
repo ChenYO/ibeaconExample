@@ -57,7 +57,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             stateLabel.text = "是否在region內"
         }
     }
-    
+    // 這區域可以被偵測的beacon
 //    func locationManager(_ manager: CLLocationManager, didStartMonitoringFor region: CLRegion) {
 //        manager.requestState(for: region)
 //    }
@@ -78,7 +78,10 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             view.backgroundColor = UIColor.white
         }
     }
-    
+    /*
+     方法一：使用didEnter,didExit來偵測進入時機
+     缺點為可靠性不高，因這兩種方法是偵測UUID，而不同區域的UUID是可以相同的
+     */
     //進入範圍
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
         if CLLocationManager.isRangingAvailable() {
@@ -99,6 +102,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         notification(message: "exit")
     }
     
+    /*
+     方法二：使用didRangeBeacons，有較精準的範圍偵測
+     */
     //顯示beacon距離及訊號強度
     func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
         if beacons.count > 0 {
