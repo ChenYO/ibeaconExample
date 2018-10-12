@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreLocation
+import UserNotifications
 
 class ViewController: UIViewController, CLLocationManagerDelegate {
 
@@ -24,7 +25,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         super.viewDidLoad()
         
         locationManager.delegate = self
-        
         if CLLocationManager.isMonitoringAvailable(for: CLBeaconRegion.self) {
             if CLLocationManager.authorizationStatus() != CLAuthorizationStatus.authorizedAlways {
                 locationManager.requestAlwaysAuthorization()
@@ -56,15 +56,25 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
     }
     
-    func locationManager(_ manager: CLLocationManager, didStartMonitoringFor region: CLRegion) {
-        manager.requestState(for: region)
-    }
+//    func locationManager(_ manager: CLLocationManager, didStartMonitoringFor region: CLRegion) {
+//        manager.requestState(for: region)
+//    }
     
     func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
         if state == CLRegionState.inside {
             if CLLocationManager.isRangingAvailable() {
                 manager.startRangingBeacons(in: region as! CLBeaconRegion)
                 stateLabel.text = "已在region中"
+                
+                let content = UNMutableNotificationContent()
+                content.title = "IBeacon Test"
+                content.body = "inside"
+                content.badge = 1
+                content.sound = UNNotificationSound.default()
+                
+                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+                let request = UNNotificationRequest(identifier: "notification", content: content, trigger: trigger)
+                UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
             } else {
                 print("不支援ranging")
             }
@@ -82,12 +92,30 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
         
         stateLabel.text = "Entering region"
+        let content = UNMutableNotificationContent()
+        content.title = "IBeacon Test"
+        content.body = "enter"
+        content.badge = 1
+        content.sound = UNNotificationSound.default()
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+        let request = UNNotificationRequest(identifier: "notification", content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
 
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
         manager.stopRangingBeacons(in: region as! CLBeaconRegion)
         view.backgroundColor = UIColor.white
         stateLabel.text = "Exiting region"
+        let content = UNMutableNotificationContent()
+        content.title = "IBeacon Test"
+        content.body = "exit"
+        content.badge = 1
+        content.sound = UNNotificationSound.default()
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+        let request = UNNotificationRequest(identifier: "notification", content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
     
     func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
@@ -115,15 +143,15 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print(error.localizedDescription)
+        print("Fail: \(error.localizedDescription)")
     }
     
     func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?, withError error: Error) {
-        print(error.localizedDescription)
+        print("Monitor Fail: \(error.localizedDescription)")
     }
     
     func locationManager(_ manager: CLLocationManager, rangingBeaconsDidFailFor region: CLBeaconRegion, withError error: Error) {
-        print(error.localizedDescription)
+        print("Ranging Beacon Fail: \(error.localizedDescription)")
     }
 }
 
