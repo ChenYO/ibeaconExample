@@ -24,6 +24,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // 檢查裝置是否有偵測功能
         locationManager.delegate = self
         if CLLocationManager.isMonitoringAvailable(for: CLBeaconRegion.self) {
             if CLLocationManager.authorizationStatus() != CLAuthorizationStatus.authorizedAlways {
@@ -41,6 +42,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 
     func registerBeaconRegionWithUUID(uuidString: String, identifier: String, isMonitor: Bool) {
         
+        // 設定偵測的beacon
         let region = CLBeaconRegion(proximityUUID: UUID(uuidString: uuidString)!, identifier: identifier)
         region.notifyOnEntry = true
         region.notifyOnExit = true
@@ -60,6 +62,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 //        manager.requestState(for: region)
 //    }
     
+    //檢查是否已在範圍內
     func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
         if state == CLRegionState.inside {
             if CLLocationManager.isRangingAvailable() {
@@ -84,6 +87,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
     }
     
+    //進入範圍
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
         if CLLocationManager.isRangingAvailable() {
             manager.startRangingBeacons(in: region as! CLBeaconRegion)
@@ -103,6 +107,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
 
+    //離開範圍
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
         manager.stopRangingBeacons(in: region as! CLBeaconRegion)
         view.backgroundColor = UIColor.white
@@ -118,6 +123,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
     
+    //顯示beacon距離及訊號強度
     func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
         if beacons.count > 0 {
             if let nearstBeacon = beacons.first {
