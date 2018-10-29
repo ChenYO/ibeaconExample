@@ -9,6 +9,23 @@
 import UIKit
 import CoreLocation
 import UserNotifications
+import Alamofire
+
+class NetworkManager {
+    var authToken = "123"
+    
+    let manager: SessionManager = {
+        let configuration: URLSessionConfiguration = {
+            let identifier = "ibeaconExample"
+            let configuration = URLSessionConfiguration.background(withIdentifier: identifier)
+            return configuration
+        }()
+        
+        return Alamofire.SessionManager(configuration: configuration)
+    }()
+    
+    static let sharedInstance = NetworkManager()
+}
 
 class ViewController: UIViewController, CLLocationManagerDelegate {
 
@@ -20,6 +37,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBOutlet weak var stateLabel: UILabel!
     
     let locationManager = CLLocationManager()
+//    var sessionManager: SessionManager?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,15 +49,14 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                 locationManager.requestAlwaysAuthorization()
             }
         }
+//        locationManager.allowsBackgroundLocationUpdates = true
+//        locationManager.pausesLocationUpdatesAutomatically = false
         
         registerBeaconRegionWithUUID(uuidString: "B0702880-A295-A8AB-F734-031A98A512DE", identifier: "test", isMonitor: true)
     }
 
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
 
+    
     func registerBeaconRegionWithUUID(uuidString: String, identifier: String, isMonitor: Bool) {
         
         // 設定偵測的beacon
@@ -69,7 +86,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                 manager.startRangingBeacons(in: region as! CLBeaconRegion)
                 stateLabel.text = "已在region中"
                 
-                notification(message: "inside")
+//                notification(message: "inside")
             } else {
                 print("不支援ranging")
             }
@@ -91,7 +108,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
         
         stateLabel.text = "Entering region"
-        notification(message: "enter")
+//        notification(message: "enter")
     }
 
     //離開範圍
@@ -99,7 +116,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         manager.stopRangingBeacons(in: region as! CLBeaconRegion)
         view.backgroundColor = UIColor.white
         stateLabel.text = "Exiting region"
-        notification(message: "exit")
+//        notification(message: "exit")
     }
     
     /*
@@ -125,10 +142,14 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                     proximity = "unknow"
                 }
                 beaconInformationLabel.text = "Proximity: \(proximity)\n Accuracy: \(nearstBeacon.accuracy)\n RSSI: \(nearstBeacon.rssi)"
+                
+                notification(message: "RSSI: \(nearstBeacon.rssi)", rssi: nearstBeacon.rssi)
+//                sentData(rssi: nearstBeacon.rssi)
                 view.backgroundColor = UIColor.red
             }
         }
     }
+    
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Fail: \(error.localizedDescription)")
@@ -142,16 +163,90 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         print("Ranging Beacon Fail: \(error.localizedDescription)")
     }
     
-    func notification(message: String) {
+    func notification(message: String, rssi: Int) {
         let content = UNMutableNotificationContent()
         content.title = "IBeacon Test"
         content.body = message
         content.badge = 1
         content.sound = UNNotificationSound.default()
         
-//        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
-        let request = UNNotificationRequest(identifier: "notification", content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let request = UNNotificationRequest(identifier: "notification", content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: {
+            _ in
+            self.sentData(rssi: rssi)
+        })
+        
+    }
+    
+    func sentData(rssi: Int) {
+        
+        let postURL = "https://appcloud.fpcetg.com.tw/loxa0802/confirm/"
+        let url = URL(string: postURL.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)!)
+        let params = [
+            "uuid": "B0702880-A295-A8AB-F734-031A98A512DE",
+            "major_num": "2",
+            "minor_num": "1000",
+            "rssi" : "\(rssi)"
+            ]
+        
+//        let queue = DispatchQueue(label: "test", qos: .background)
+//        let configuration = URLSessionConfiguration.background(withIdentifier: "chen.ibeaconExample")
+//        let configuration = URLSessionConfiguration.background(withIdentifier: "com.chen.ibeaconExample")
+//        sessionManager = Alamofire.SessionManager(configuration: configuration)
+
+        NetworkManager.sharedInstance.manager.upload(multipartFormData: { multipartFormData in
+            for (key, value) in params {
+                multipartFormData.append(value.data(using: String.Encoding.utf8)!, withName: key)
+            }
+        }, to: url!){
+            result in
+            switch result {
+            case .success:
+                print("Success")
+            case .failure(let error):
+
+                print("UPLOAD Error: \(error)")
+            }
+        }
+        
+//        Alamofire.upload(multipartFormData: { multipartFormData in
+//            for (key, value) in params {
+//                multipartFormData.append(value.data(using: String.Encoding.utf8)!, withName: key)
+//            }
+//        }, to: url!){
+//            result in
+//            switch result {
+//            case .success:
+//                print("Success")
+//            case .failure(let error):
+//
+//                print("UPLOAD Error: \(error)")
+//            }
+//        }
+        
+//        sessionManager.request("https://appcloud.fpcetg.com.tw/loxa0802/confirm/", method:.post, parameters:params).responseJSON(){
+//            response in
+//
+//            switch response.result {
+//            case .success(let responseObject):
+//                print(responseObject)
+//            case .failure(let error):
+//                print(error.localizedDescription)
+//            }
+//        }
+        
+//        Alamofire.request("http://10.153.196.100:10080/postTest/", method:.post, parameters:params).responseJSON(queue: queue){
+//            response in
+//
+//            switch response.result {
+//            case .success(let responseObject):
+//                print(responseObject)
+//            case .failure(let error):
+//                print(error.localizedDescription)
+//            }
+//        }
+        
     }
 }
 
